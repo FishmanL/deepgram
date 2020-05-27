@@ -2,6 +2,20 @@ import wave
 
 
 
+
+def writetofile(retdict):
+    """
+    writes a wav file to a temp file, outputting the name of that temp file (for, e.g., file sending)
+    :param retdict: a dict containing metadata and content of a wav file
+    :return: filename
+    """
+    p = retdict
+    with wave.open("test.wav", "wb") as g:
+        g.setnchannels(p["numchannels"])
+        g.setsampwidth(p["samplewidth"])
+        g.setframerate(p["framerate"])
+        g.writeframes(p["content"])
+    return "test.wav"
 def processfile(binobj):
     """
     takes in a wave.read object, outputs a metadata processed version of the object
