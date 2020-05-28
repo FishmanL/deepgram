@@ -33,18 +33,23 @@ with open("config.yaml", "r") as f:
     configfile = yaml.load(f, Loader=yaml.FullLoader)
 
 
+def preprocessdict(indict):
+    retdict = indict
+    if "userid" not in indict:
+        retdict["userid"] = 1
+    keylst = ["nframes", "samplewidth", "userid", "numchannels", "filename", "seconds", "framerate"]
+    for key in keylst:
+        if key not in indict:
+            retdict[key] = None
+    return retdict
 
 
 def searchformatches(inreq):
-    def preprocessdict(indict):
-        retdict = indict
-        if "userid" not in indict:
-            retdict["userid"] = 1
-        keylst = ["nframes", "samplewidth", "userid", "numchannels", "filename", "seconds", "framerate"]
-        for key in keylst:
-            if key not in indict:
-                retdict[key] = None
-        return retdict
+    """
+    finds al rows corresponding to a given request
+    :param inreq: incoming request args
+    :return: all matching wav files + metadata (to be split)
+    """
     newreq = preprocessdict(inreq)
     conn = psycopg2.connect(user='postgres', password=configfile["password"], database='deepgram')
 
