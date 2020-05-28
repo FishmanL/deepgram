@@ -36,6 +36,18 @@ def processfile(binobj):
 
 
 
+def savetotemp(p):
+    """
+    saves an incoming rowdict to a tempfile
+
+    :param p: incoming row dict
+    """
+    with wave.open("test.wav", "wb") as g:
+        g.setnchannels(p["numchannels"])
+        g.setsampwidth(p["samplewidth"])
+        g.setframerate(p["framerate"])
+        g.writeframes(p["content"])
+
 
 
 if __name__ == "__main__":
