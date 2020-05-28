@@ -1,8 +1,11 @@
-from flask import Flask, request, Response, render_template, flash, redirect
+from flask import Flask, request, Response, render_template, flash, redirect, send_file
+from wavprocessor import processfile, savetotemp
+from dbhandler import searchformatches, insertmatch
+from json import dumps
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'MVP-no-CSRF-Prot'
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/post', methods=['POST'])
 def upload_file():
     if request.method == 'POST':
         # check if the post request has the file part
@@ -15,16 +18,48 @@ def upload_file():
         name = file.filename
         if file.filename == '':
             flash('No selected file')
-            return redirect(request.url)
+            return "No file was given!"
         if file:
-            pass
+            try:
+                filedict = processfile(file)
+                filedict["filename"] = name
+                insertmatch(filedict)
+                return("{} successfully added".format(name))
+            except Exception as e:
+                return str(e)
 
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form method=post enctype=multipart/form-data>
-      <p><input type=file name=file>
-         <input type=submit value=Upload>
-    </form>
-    '''
+
+
+
+@app.route('/list', methods=['GET'])
+def list_files():
+    try:
+        results = searchformatches(request.args)
+        return dumps([item["name"] for item in results])
+    except Exception as e:
+        return str(e)
+
+@app.route('/info', methods=['GET'])
+def info_files():
+    try:
+        results = searchformatches(request.args)
+        items = [{key: value for key, value in result.items() if key != 'content'} for result in results]
+        return dumps(items)
+
+    except Exception as e:
+        return str(e)
+
+@app.route('/download', methods=['GET'])
+def download_files():
+    try:
+        results = searchformatches(request.args)
+        lst = []
+        for item in results:
+            savetotemp(item)
+            send_file("test1.wav", as_attachment=True, attachment_filename=item["filename"])
+            lst.append(item["name"])
+            return dumps({'sentfiles':lst})
+    except Exception as e:
+        return str(e)
+
+

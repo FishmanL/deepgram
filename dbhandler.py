@@ -60,7 +60,7 @@ def searchformatches(inreq):
             cur.execute(selectsql, newreq)
             return [dict(item) for item in cur.fetchall()]
         except Exception as e:
-            print(e)
+            raise e
         finally:
             conn.commit()
 
