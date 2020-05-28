@@ -42,7 +42,7 @@ def savetotemp(p):
 
     :param p: incoming row dict
     """
-    with wave.open("test.wav", "wb") as g:
+    with wave.open("test1.wav", "wb") as g:
         g.setnchannels(p["numchannels"])
         g.setsampwidth(p["samplewidth"])
         g.setframerate(p["framerate"])

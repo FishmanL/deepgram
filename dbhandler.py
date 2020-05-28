@@ -1,7 +1,9 @@
 import psycopg2
 import yaml
 
-from wavprocessor import savetotemp
+from wavprocessor import processfile, savetotemp
+
+from psycopg2.extras import RealDictCursor
 
 selectsql = """SELECT * FROM wavfiles WHERE (nframes = %(nframes)s OR %(nframes)s IS NULL)
       AND (samplewidth = %(samplewidth)s OR %(samplewidth)s IS NULL)
@@ -11,7 +13,7 @@ selectsql = """SELECT * FROM wavfiles WHERE (nframes = %(nframes)s OR %(nframes)
       AND (userid = %(userid)s OR %(userid)s IS NULL)
       AND (seconds = %(seconds)s OR %(seconds)s IS NULL)"""
 
-insertsql = """insert into members (nframes, samplewidth, userid, content, numchannels, filename, seconds, framerate) 
+insertsql = """insert into wavfiles (nframes, samplewidth, userid, content, numchannels, filename, seconds, framerate) 
 VALUES (%(nframes)s, %(samplewidth)s, %(userid)s, %(content)s, %(numchannels)s, %(filename)s, %(seconds)s, %(framerate)s)"""
 
 selectbynamesql = "SELECT * from wavfiles where (filename = %(filename)s OR %(filename)s IS NULL) AND (userid = %(userid)s OR %(userid)s IS NULL)"
@@ -53,10 +55,10 @@ def searchformatches(inreq):
     newreq = preprocessdict(inreq)
     conn = psycopg2.connect(user='postgres', password=configfile["password"], database='deepgram')
 
-    with conn.cursor() as cur:
+    with conn.cursor(cursor_factory = RealDictCursor) as cur:
         try:
             cur.execute(selectsql, newreq)
-            return cur.fetchall()
+            return [dict(item) for item in cur.fetchall()]
         except Exception as e:
             print(e)
         finally:
@@ -84,3 +86,8 @@ def insertmatch(member):
         except Exception as e:
             conn.commit()
             raise e
+
+
+if __name__ == "__main__":
+    savetotemp(searchformatches(dict())[0])
+    print(searchformatches(dict()))
