@@ -34,15 +34,15 @@ def upload_file():
 @app.route('/list', methods=['GET'])
 def list_files():
     try:
-        results = searchformatches(request.args)
-        return dumps([item["name"] for item in results])
+        results = searchformatches(request.args.to_dict())
+        return dumps([item["filename"] for item in results])
     except Exception as e:
         return str(e)
 
 @app.route('/info', methods=['GET'])
 def info_files():
     try:
-        results = searchformatches(request.args)
+        results = searchformatches(request.args.to_dict())
         items = [{key: value for key, value in result.items() if key != 'content'} for result in results]
         return dumps(items)
 
@@ -52,13 +52,11 @@ def info_files():
 @app.route('/download', methods=['GET'])
 def download_files():
     try:
-        results = searchformatches(request.args)
+        results = searchformatches(request.args.to_dict())
         lst = []
         for item in results:
             savetotemp(item)
-            send_file("test1.wav", as_attachment=True, attachment_filename=item["filename"])
-            lst.append(item["name"])
-            return dumps({'sentfiles':lst})
+            return send_file("test1.wav", as_attachment=True, attachment_filename=item["filename"])
     except Exception as e:
         return str(e)
 
