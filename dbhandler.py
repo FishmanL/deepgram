@@ -3,6 +3,8 @@ import yaml
 
 from wavprocessor import processfile, savetotemp
 
+import wave
+
 from psycopg2.extras import RealDictCursor
 
 selectsql = """SELECT * FROM wavfiles WHERE (nframes = %(nframes)s OR %(nframes)s IS NULL)
@@ -89,5 +91,7 @@ def insertmatch(member):
 
 
 if __name__ == "__main__":
-    savetotemp(searchformatches(dict())[0])
-    print(searchformatches(dict()))
+    with wave.open("StarWars3.wav", "rb") as f:
+        p = processfile(f)
+        p["filename"] = "StarWars3.wav"
+        insertmatch(p)

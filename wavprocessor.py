@@ -51,7 +51,7 @@ def savetotemp(p):
 
 
 if __name__ == "__main__":
-    with wave.open("CantinaBand3.wav", "rb") as f:
+    with wave.open("StarWars3.wav", "rb") as f:
         p = processfile(f)
         print(p)
         with wave.open("test.wav", "wb") as g:
@@ -59,8 +59,6 @@ if __name__ == "__main__":
             g.setsampwidth(p["samplewidth"])
             g.setframerate(p["framerate"])
             g.writeframes(p["content"])
-    with wave.open("README.md", "rb") as f:
-        print(processfile(f))
 
 
 

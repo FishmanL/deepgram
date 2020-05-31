@@ -2,6 +2,8 @@ from flask import Flask, request, Response, render_template, flash, redirect, se
 from wavprocessor import processfile, savetotemp
 from dbhandler import searchformatches, insertmatch
 from json import dumps
+import wave
+import io
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'MVP-no-CSRF-Prot'
@@ -9,10 +11,9 @@ app.config['SECRET_KEY'] = 'MVP-no-CSRF-Prot'
 def upload_file():
     if request.method == 'POST':
         # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
+        if len(request.files)==0:
+            return 'No file given'
+        file = request.files[list(request.files.keys())[0]]
         # if user does not select file, browser also
         # submit a empty part without filename
         name = file.filename
@@ -21,10 +22,13 @@ def upload_file():
             return "No file was given!"
         if file:
             try:
-                filedict = processfile(file)
+                with open("tempfile.wav", "wb") as tmp:
+                    tmp.write(file.read())
+                with wave.open("tempfile.wav", "rb") as f:
+                    filedict = processfile(f)
                 filedict["filename"] = name
                 insertmatch(filedict)
-                return("{} successfully added".format(name))
+                return("{} successfully added".format(str(filedict)))
             except Exception as e:
                 return str(e)
 
@@ -53,7 +57,6 @@ def info_files():
 def download_files():
     try:
         results = searchformatches(request.args.to_dict())
-        lst = []
         for item in results:
             savetotemp(item)
             return send_file("test1.wav", as_attachment=True, attachment_filename=item["filename"])
