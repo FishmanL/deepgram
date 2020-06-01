@@ -18,6 +18,13 @@ VALUES (%(nframes)s, %(samplewidth)s, %(userid)s, %(content)s, %(numchannels)s, 
 
 selectbynamesql = "SELECT * from wavfiles where (filename = %(filename)s OR %(filename)s IS NULL) AND (userid = %(userid)s OR %(userid)s IS NULL)"
 
+chunkinsertsql = """insert into chunks (wavid, content, chunkid) VALUES (%(wavid)s, %(content)s, %(chunkid)s)"""
+
+chunkretrievalsql = """select * from chunks where chunkid = %(chunkid)s"""
+
+metadataretrievalsql = """select * from wavfiles where wavid = %(wavid)s"""
+
+ctr = 0
 
 with open("config.yaml", "r") as f:
     configfile = yaml.load(f, Loader=yaml.FullLoader)
@@ -61,6 +68,42 @@ def searchformatches(inreq):
             conn.commit()
 
 
+def chunkandinsert(chunklist, wavid):
+    global ctr
+    oldctr = ctr
+    conn = psycopg2.connect(user='postgres', password=configfile["password"], database='deepgram')
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        for item in chunklist:
+            try:
+                dictquery = {'content': item, 'wavid': wavid, 'chunkid': str(ctr)}
+                cur.execute(chunkinsertsql, dictquery)
+                conn.commit()
+                ctr += 1
+            except Exception as e:
+                raise e
+            finally:
+                conn.commit()
+    return list(range(oldctr, ctr))
+
+
+def getchunkandmetadata(inreq):
+    conn = psycopg2.connect(user='postgres', password=configfile["password"], database='deepgram')
+    with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        try:
+            cur.execute(chunkretrievalsql, inreq)
+            conn.commit()
+            reschunk = cur.fetchone()
+            ncontent = reschunk['content']
+            metadict = {'wavid': reschunk['wavid']}
+            cur.execute(metadataretrievalsql, metadict)
+            conn.commit()
+            resmeta = dict(cur.fetchone())
+            resmeta['content'] = ncontent
+            return resmeta
+        except Exception as e:
+            raise e
+        finally:
+            conn.commit()
 
 
 def insertmatch(member):

@@ -3,8 +3,8 @@ from json import dumps
 
 from flask import Flask, request, flash, send_file
 
-from dbhandler import searchformatches, insertmatch
-from wavprocessor import processfile, savetotemp
+from dbhandler import searchformatches, insertmatch, chunkandinsert, getchunkandmetadata
+from wavprocessor import processfile, savetotemp, chunkobj
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'MVP-no-CSRF-Prot'
@@ -67,3 +67,26 @@ def download_files():
         return str(e)
 
 
+@app.route('/getchunk', methods=['GET'])
+def download_files():
+    try:
+        results = getchunkandmetadata(request.args.to_dict())
+        savetotemp(results)
+        return send_file("test1.wav", as_attachment=True, attachment_filename=results["filename"])
+    except Exception as e:
+        return str(e)
+
+
+@app.route('/chunk', methods=['GET'])
+def chunkfile():
+    try:
+        maxsec = request.args.get('maxsec', 10)
+        results = searchformatches(request.args.to_dict())
+        for item in results:
+            savetotemp(item)
+            with wave.open("test1.wav", 'wb') as tobechunked:
+                chunklist = chunkobj(tobechunked, maxsec)
+                idlist = chunkandinsert(chunklist, item['wavid'])
+                return dumps(idlist)
+    except Exception as e:
+        return str(e)

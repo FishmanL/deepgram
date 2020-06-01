@@ -35,6 +35,16 @@ def processfile(binobj):
     return retdict
 
 
+def chunkobj(binobj, maxsec=10):
+    chunklist = []
+    framerate = binobj.getframerate()
+    currframes = binobj.getnframes()
+    while currframes > 0:
+        framestoread = min(framerate * maxsec, currframes)
+        chunklist.append((binobj.readframes(framestoread), framestoread))
+        currframes -= framestoread
+    return chunklist
+
 
 def savetotemp(p):
     """
