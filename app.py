@@ -68,11 +68,12 @@ def download_files():
 
 
 @app.route('/getchunk', methods=['GET'])
-def download_files():
+def get_chunks():
     try:
         results = getchunkandmetadata(request.args.to_dict())
         savetotemp(results)
-        return send_file("test1.wav", as_attachment=True, attachment_filename=results["filename"])
+        return send_file("test1.wav", as_attachment=True,
+                         attachment_filename=str(results["chunkid"]) + results["filename"])
     except Exception as e:
         return str(e)
 
@@ -80,11 +81,11 @@ def download_files():
 @app.route('/chunk', methods=['GET'])
 def chunkfile():
     try:
-        maxsec = request.args.get('maxsec', 10)
+        maxsec = int(request.args.get('maxsec', 10))
         results = searchformatches(request.args.to_dict())
         for item in results:
             savetotemp(item)
-            with wave.open("test1.wav", 'wb') as tobechunked:
+            with wave.open("test1.wav", 'rb') as tobechunked:
                 chunklist = chunkobj(tobechunked, maxsec)
                 idlist = chunkandinsert(chunklist, item['wavid'])
                 return dumps(idlist)

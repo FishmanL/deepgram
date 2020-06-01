@@ -75,7 +75,7 @@ def chunkandinsert(chunklist, wavid):
     with conn.cursor(cursor_factory=RealDictCursor) as cur:
         for item in chunklist:
             try:
-                dictquery = {'content': item, 'wavid': wavid, 'chunkid': str(ctr)}
+                dictquery = {'content': item[0], 'wavid': wavid, 'chunkid': str(ctr)}
                 cur.execute(chunkinsertsql, dictquery)
                 conn.commit()
                 ctr += 1
@@ -94,11 +94,13 @@ def getchunkandmetadata(inreq):
             conn.commit()
             reschunk = cur.fetchone()
             ncontent = reschunk['content']
+            chunkid = reschunk['chunkid']
             metadict = {'wavid': reschunk['wavid']}
             cur.execute(metadataretrievalsql, metadict)
             conn.commit()
             resmeta = dict(cur.fetchone())
             resmeta['content'] = ncontent
+            resmeta['chunkid'] = chunkid
             return resmeta
         except Exception as e:
             raise e
