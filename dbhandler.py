@@ -19,18 +19,6 @@ VALUES (%(nframes)s, %(samplewidth)s, %(userid)s, %(content)s, %(numchannels)s, 
 selectbynamesql = "SELECT * from wavfiles where (filename = %(filename)s OR %(filename)s IS NULL) AND (userid = %(userid)s OR %(userid)s IS NULL)"
 
 
-class Dict2Obj(object):
-    """
-    Turns a dictionary into a class
-    """
-
-    # ----------------------------------------------------------------------
-    def __init__(self, dictionary):
-        """Constructor"""
-        for key in dictionary:
-            setattr(self, key, dictionary[key])
-
-
 with open("config.yaml", "r") as f:
     configfile = yaml.load(f, Loader=yaml.FullLoader)
 
