@@ -1,9 +1,10 @@
-from flask import Flask, request, Response, render_template, flash, redirect, send_file
-from wavprocessor import processfile, savetotemp
-from dbhandler import searchformatches, insertmatch
-from json import dumps
 import wave
-import io
+from json import dumps
+
+from flask import Flask, request, flash, send_file
+
+from dbhandler import searchformatches, insertmatch
+from wavprocessor import processfile, savetotemp
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'MVP-no-CSRF-Prot'
@@ -27,8 +28,10 @@ def upload_file():
                 with wave.open("tempfile.wav", "rb") as f:
                     filedict = processfile(f)
                 filedict["filename"] = name
+                if filedict["seconds"] == -1:
+                    return ("File content invalid, not inserted")
                 insertmatch(filedict)
-                return("{} successfully added".format(str(filedict)))
+                return ("{} successfully added".format(str(name)))
             except Exception as e:
                 return str(e)
 

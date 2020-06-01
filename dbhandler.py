@@ -1,19 +1,17 @@
 import psycopg2
 import yaml
 
-from wavprocessor import processfile, savetotemp
-
-import wave
-
 from psycopg2.extras import RealDictCursor
 
 selectsql = """SELECT * FROM wavfiles WHERE (nframes = %(nframes)s OR %(nframes)s IS NULL)
       AND (samplewidth = %(samplewidth)s OR %(samplewidth)s IS NULL)
       AND (framerate = %(framerate)s OR %(framerate)s IS NULL)
-      AND (filename = %(filename)s OR %(filename)s IS NULL)
+      AND (filename LIKE %(filename)s OR %(filename)s IS NULL)
       AND (numchannels = %(numchannels)s OR %(numchannels)s IS NULL)
       AND (userid = %(userid)s OR %(userid)s IS NULL)
-      AND (seconds = %(seconds)s OR %(seconds)s IS NULL)"""
+      AND (seconds = %(seconds)s OR %(seconds)s IS NULL)
+      AND (seconds >= %(minduration)s OR %(minduration)s IS NULL)
+      AND ((seconds <= %(maxduration)s AND seconds >= 0) OR %(minduration)s IS NULL)"""
 
 insertsql = """insert into wavfiles (nframes, samplewidth, userid, content, numchannels, filename, seconds, framerate) 
 VALUES (%(nframes)s, %(samplewidth)s, %(userid)s, %(content)s, %(numchannels)s, %(filename)s, %(seconds)s, %(framerate)s)"""
@@ -38,13 +36,21 @@ with open("config.yaml", "r") as f:
 
 
 def preprocessdict(indict):
+    """
+    ensures all required keys have default values if unset in our search dict.
+    :param indict: incoming dictionary
+    :return: processed dictionary
+    """
     retdict = indict
     if "userid" not in indict:
         retdict["userid"] = 1
-    keylst = ["nframes", "samplewidth", "userid", "numchannels", "filename", "seconds", "framerate"]
+    keylst = ["nframes", "samplewidth", "userid", "numchannels", "filename", "seconds", "framerate", "minduration",
+              "maxduration"]
     for key in keylst:
         if key not in indict:
             retdict[key] = None
+    if retdict['filename'] is not None:
+        retdict['filename'] = '%' + retdict['filename'] + '%'
     return retdict
 
 
@@ -91,7 +97,4 @@ def insertmatch(member):
 
 
 if __name__ == "__main__":
-    with wave.open("StarWars3.wav", "rb") as f:
-        p = processfile(f)
-        p["filename"] = "StarWars3.wav"
-        insertmatch(p)
+    print(searchformatches({'filename': 'Ca'}))
